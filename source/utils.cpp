@@ -68,6 +68,10 @@ WUHBUtilsStatus WUHBUtils_InitLibrary() {
     return WUHB_UTILS_RESULT_SUCCESS;
 }
 
+WUHBUtilsStatus WUHBUtils_DeInitLibrary() {
+    return WUHB_UTILS_RESULT_SUCCESS;
+}
+
 WUHBUtilsVersion GetVersion();
 WUHBUtilsVersion WUHBUtils_GetVersion() {
     if (sWUUGetVersion == nullptr) {

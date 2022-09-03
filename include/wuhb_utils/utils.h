@@ -57,6 +57,8 @@ typedef enum {
 */
 WUHBUtilsStatus WUHBUtils_InitLibrary();
 
+WUHBUtilsStatus WUHBUtils_DeInitLibrary();
+
 /**
  * Returns the API Version of the WUHBUtils Module.
  * @return The WUHBUtilsVersion of the Module

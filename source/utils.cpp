@@ -7,7 +7,7 @@
 
 static OSDynLoad_Module sModuleHandle = nullptr;
 
-static WUHBUtilsVersion (*sWUUGetVersion)()                                                          = nullptr;
+static WUHBUtilsApiErrorType (*sWUUGetVersion)(WUHBUtilsVersion *)                                   = nullptr;
 static WUHBUtilsApiErrorType (*sWUUMountBundle)(const char *, const char *, BundleSource, int32_t *) = nullptr;
 static WUHBUtilsApiErrorType (*sWUUUnmountBundle)(const char *, int32_t *)                           = nullptr;
 static WUHBUtilsApiErrorType (*sWUUFileOpen)(const char *, WUHBFileHandle *)                         = nullptr;
@@ -110,7 +110,7 @@ WUHBUtilsStatus WUHBUtils_DeInitLibrary() {
     return WUHB_UTILS_RESULT_SUCCESS;
 }
 
-WUHBUtilsStatus GetVersion(WUHBUtilsVersion *);
+WUHBUtilsApiErrorType GetVersion(WUHBUtilsVersion *);
 WUHBUtilsStatus WUHBUtils_GetVersion(WUHBUtilsVersion *outVersion) {
     if (sWUUGetVersion == nullptr) {
         if (OSDynLoad_Acquire("homebrew_wuhb_utils", &sModuleHandle) != OS_DYNLOAD_OK) {
@@ -127,7 +127,11 @@ WUHBUtilsStatus WUHBUtils_GetVersion(WUHBUtilsVersion *outVersion) {
         return WUHB_UTILS_RESULT_INVALID_ARGUMENT;
     }
 
-    return reinterpret_cast<decltype(&GetVersion)>(sWUUGetVersion)(outVersion);
+    auto res = reinterpret_cast<decltype(&GetVersion)>(sWUUGetVersion)(outVersion);
+    if (res == WUHB_UTILS_API_ERROR_NONE) {
+        return WUHB_UTILS_RESULT_SUCCESS;
+    }
+    return res == WUHB_UTILS_API_ERROR_INVALID_ARG ? WUHB_UTILS_RESULT_INVALID_ARGUMENT : WUHB_UTILS_RESULT_UNKNOWN_ERROR;
 }
 
 WUHBUtilsApiErrorType MountBundle(const char *, const char *, BundleSource, int32_t *);

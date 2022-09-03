@@ -16,6 +16,40 @@ static WUHBUtilsApiErrorType (*sWUUFileClose)(WUHBFileHandle)                   
 static WUHBUtilsApiErrorType (*sWUUFileExists)(const char *, int32_t *)                              = nullptr;
 static WUHBUtilsApiErrorType (*sWUUGetRPXInfo)(const char *, BundleSource, WUHBRPXInfo *)            = nullptr;
 
+const char *WUHBUtils_GetStatusStr(WUHBUtilsStatus status) {
+    switch (status) {
+        case WUHB_UTILS_RESULT_SUCCESS:
+            return "WUHB_UTILS_RESULT_SUCCESS";
+        case WUHB_UTILS_RESULT_MODULE_NOT_FOUND:
+            return "WUHB_UTILS_RESULT_MODULE_NOT_FOUND";
+        case WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT:
+            return "WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT";
+        case WUHB_UTILS_RESULT_UNSUPPORTED_VERSION:
+            return "WUHB_UTILS_RESULT_UNSUPPORTED_VERSION";
+        case WUHB_UTILS_RESULT_INVALID_ARGUMENT:
+            return "WUHB_UTILS_RESULT_INVALID_ARGUMENT";
+        case WUHB_UTILS_RESULT_NO_MEMORY:
+            return "WUHB_UTILS_RESULT_NO_MEMORY";
+        case WUHB_UTILS_RESULT_MOUNT_NAME_TAKEN:
+            return "WUHB_UTILS_RESULT_MOUNT_NAME_TAKEN";
+        case WUHB_UTILS_RESULT_MOUNT_NOT_FOUND:
+            return "WUHB_UTILS_RESULT_MOUNT_NOT_FOUND";
+        case WUHB_UTILS_RESULT_FILE_NOT_FOUND:
+            return "WUHB_UTILS_RESULT_FILE_NOT_FOUND";
+        case WUHB_UTILS_RESULT_FILE_HANDLE_NOT_FOUND:
+            return "WUHB_UTILS_RESULT_FILE_HANDLE_NOT_FOUND";
+        case WUHB_UTILS_RESULT_MOUNT_FAILED:
+            return "WUHB_UTILS_RESULT_MOUNT_FAILED";
+        case WUHB_UTILS_RESULT_LIB_UNINITIALIZED:
+            return "WUHB_UTILS_RESULT_LIB_UNINITIALIZED";
+        case WUHB_UTILS_RESULT_UNKNOWN_ERROR:
+            return "WUHB_UTILS_RESULT_UNKNOWN_ERROR";
+        case WUHB_UTILS_RESULT_UNSUPPORTED_COMMAND:
+            return "WUHB_UTILS_RESULT_UNSUPPORTED_COMMAND";
+    }
+    return "WUHB_UTILS_RESULT_UNKNOWN_ERROR";
+}
+
 static WUHBUtilsVersion wuhbUtilsVersion = WUHB_UTILS_MODULE_VERSION_ERROR;
 
 WUHBUtilsStatus WUHBUtils_InitLibrary() {

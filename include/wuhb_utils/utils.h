@@ -49,6 +49,8 @@ typedef enum {
     BundleSource_FileDescriptor_CafeOS, /* The native CafeOS file api will be used, use paths like /vol/external01/my.wuhb */
 } BundleSource;
 
+const char *WUHBUtils_GetStatusStr(WUHBUtilsStatus status);
+
 /**
  * This function has to be called before any other function of this lib (except WUHBUtils_GetVersion) can be used.
  *

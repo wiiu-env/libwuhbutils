@@ -55,7 +55,7 @@ typedef enum {
  *          WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT:   The module is missing an expected export.
  *          WUHB_UTILS_RESULT_UNSUPPORTED_VERSION:     The version of the loaded module is not compatible with this version of the lib.
 */
-WUHBUtilsStatus WUHBUtils_Init();
+WUHBUtilsStatus WUHBUtils_InitLibrary();
 
 /**
  * Returns the API Version of the WUHBUtils Module.

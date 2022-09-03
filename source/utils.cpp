@@ -15,7 +15,7 @@ static WUHBUtilsApiErrorType (*sWUUFileClose)(WUHBFileHandle)                   
 static WUHBUtilsApiErrorType (*sWUUFileExists)(const char *, int32_t *)                              = nullptr;
 static WUHBUtilsApiErrorType (*sWUUGetRPXInfo)(const char *, BundleSource, WUHBRPXInfo *)            = nullptr;
 
-WUHBUtilsStatus WUHBUtils_Init() {
+WUHBUtilsStatus WUHBUtils_InitLibrary() {
     if (OSDynLoad_Acquire("homebrew_wuhb_utils", &sModuleHandle) != OS_DYNLOAD_OK) {
         OSReport("WUHBUtils_Init: OSDynLoad_Acquire failed.\n");
         return WUHB_UTILS_RESULT_MODULE_NOT_FOUND;

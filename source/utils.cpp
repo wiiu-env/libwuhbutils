@@ -1,3 +1,4 @@
+#include "logger.h"
 #include <coreinit/debug.h>
 #include <coreinit/dynload.h>
 #include <cstring>
@@ -15,54 +16,57 @@ static WUHBUtilsApiErrorType (*sWUUFileClose)(WUHBFileHandle)                   
 static WUHBUtilsApiErrorType (*sWUUFileExists)(const char *, int32_t *)                              = nullptr;
 static WUHBUtilsApiErrorType (*sWUUGetRPXInfo)(const char *, BundleSource, WUHBRPXInfo *)            = nullptr;
 
+static WUHBUtilsVersion wuhbUtilsVersion = WUHB_UTILS_MODULE_VERSION_ERROR;
+
 WUHBUtilsStatus WUHBUtils_InitLibrary() {
     if (OSDynLoad_Acquire("homebrew_wuhb_utils", &sModuleHandle) != OS_DYNLOAD_OK) {
-        OSReport("WUHBUtils_Init: OSDynLoad_Acquire failed.\n");
+        DEBUG_FUNCTION_LINE_ERR("OSDynLoad_Acquire homebrew_wuhb_utils failed.");
         return WUHB_UTILS_RESULT_MODULE_NOT_FOUND;
     }
 
     if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_GetVersion", (void **) &sWUUGetVersion) != OS_DYNLOAD_OK) {
-        OSReport("WUHBUtils_Init: WUU_GetVersion failed.\n");
+        DEBUG_FUNCTION_LINE_ERR("FindExport WUU_GetVersion failed.");
         return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
     }
-    auto res = WUHBUtils_GetVersion();
-    if (res != WUHB_UTILS_MODULE_VERSION) {
+
+    auto res = WUHBUtils_GetVersion(&wuhbUtilsVersion);
+    if (res != WUHB_UTILS_RESULT_SUCCESS) {
         return WUHB_UTILS_RESULT_UNSUPPORTED_VERSION;
     }
 
     if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_MountBundle", (void **) &sWUUMountBundle) != OS_DYNLOAD_OK) {
-        OSReport("WUHBUtils_Init: WUU_MountBundle failed.\n");
-        return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
+        DEBUG_FUNCTION_LINE_WARN("FindExport WUU_MountBundle failed.");
+        sWUUMountBundle = nullptr;
     }
 
     if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_UnmountBundle", (void **) &sWUUUnmountBundle) != OS_DYNLOAD_OK) {
-        OSReport("WUHBUtils_Init: WUU_UnmountBundle failed.\n");
-        return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
+        DEBUG_FUNCTION_LINE_WARN("FindExport WUU_UnmountBundle failed.");
+        sWUUUnmountBundle = nullptr;
     }
 
     if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_FileOpen", (void **) &sWUUFileOpen) != OS_DYNLOAD_OK) {
-        OSReport("WUHBUtils_Init: WUU_FileOpen failed.\n");
-        return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
+        DEBUG_FUNCTION_LINE_WARN("FindExport WUU_FileOpen failed.");
+        sWUUFileOpen = nullptr;
     }
 
     if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_FileRead", (void **) &sWUUFileRead) != OS_DYNLOAD_OK) {
-        OSReport("WUHBUtils_Init: WUU_FileRead failed.\n");
-        return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
+        DEBUG_FUNCTION_LINE_WARN("FindExport WUU_FileRead failed.");
+        sWUUFileRead = nullptr;
     }
 
     if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_FileClose", (void **) &sWUUFileClose) != OS_DYNLOAD_OK) {
-        OSReport("WUHBUtils_Init: WUU_FileClose failed.\n");
-        return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
+        DEBUG_FUNCTION_LINE_WARN("FindExport WUU_FileClose failed.");
+        sWUUFileClose = nullptr;
     }
 
     if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_FileExists", (void **) &sWUUFileExists) != OS_DYNLOAD_OK) {
-        OSReport("WUHBUtils_Init: WUU_FileExists failed.\n");
-        return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
+        DEBUG_FUNCTION_LINE_WARN("FindExport WUU_FileExists failed.");
+        sWUUFileExists = nullptr;
     }
 
     if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_GetRPXInfo", (void **) &sWUUGetRPXInfo) != OS_DYNLOAD_OK) {
-        OSReport("WUHBUtils_Init: WUU_GetRPXInfo failed.\n");
-        return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
+        DEBUG_FUNCTION_LINE_WARN("FindExport WUU_GetRPXInfo failed.");
+        sWUUGetRPXInfo = nullptr;
     }
 
     return WUHB_UTILS_RESULT_SUCCESS;
@@ -72,19 +76,33 @@ WUHBUtilsStatus WUHBUtils_DeInitLibrary() {
     return WUHB_UTILS_RESULT_SUCCESS;
 }
 
-WUHBUtilsVersion GetVersion();
-WUHBUtilsVersion WUHBUtils_GetVersion() {
+WUHBUtilsStatus GetVersion(WUHBUtilsVersion *);
+WUHBUtilsStatus WUHBUtils_GetVersion(WUHBUtilsVersion *outVersion) {
     if (sWUUGetVersion == nullptr) {
-        return WUHB_UTILS_RESULT_LIB_UNINITIALIZED;
+        if (OSDynLoad_Acquire("homebrew_wuhb_utils", &sModuleHandle) != OS_DYNLOAD_OK) {
+            DEBUG_FUNCTION_LINE_WARN("OSDynLoad_Acquire failed.");
+            return WUHB_UTILS_RESULT_MODULE_NOT_FOUND;
+        }
+
+        if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_GetVersion", (void **) &sWUUGetVersion) != OS_DYNLOAD_OK) {
+            DEBUG_FUNCTION_LINE_WARN("FindExport WUU_GetVersion failed.");
+            return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
+        }
+    }
+    if (outVersion == nullptr) {
+        return WUHB_UTILS_RESULT_INVALID_ARGUMENT;
     }
 
-    return reinterpret_cast<decltype(&GetVersion)>(sWUUGetVersion)();
+    return reinterpret_cast<decltype(&GetVersion)>(sWUUGetVersion)(outVersion);
 }
 
 WUHBUtilsApiErrorType MountBundle(const char *, const char *, BundleSource, int32_t *);
 WUHBUtilsStatus WUHBUtils_MountBundle(const char *name, const char *path, BundleSource source, int32_t *outRes) {
-    if (sWUUMountBundle == nullptr) {
+    if (wuhbUtilsVersion == WUHB_UTILS_MODULE_VERSION_ERROR) {
         return WUHB_UTILS_RESULT_LIB_UNINITIALIZED;
+    }
+    if (sWUUMountBundle == nullptr || wuhbUtilsVersion < 1) {
+        return WUHB_UTILS_RESULT_UNSUPPORTED_COMMAND;
     }
     auto res = reinterpret_cast<decltype(&MountBundle)>(sWUUMountBundle)(name, path, source, outRes);
 
@@ -92,7 +110,7 @@ WUHBUtilsStatus WUHBUtils_MountBundle(const char *name, const char *path, Bundle
         case WUHB_UTILS_API_ERROR_NONE:
             return WUHB_UTILS_RESULT_SUCCESS;
         case WUHB_UTILS_API_ERROR_INVALID_ARG:
-            return WUHB_UTILS_RESULT_INVALID_ARG;
+            return WUHB_UTILS_RESULT_INVALID_ARGUMENT;
         case WUHB_UTILS_API_ERROR_MOUNT_NAME_TAKEN:
             return WUHB_UTILS_RESULT_MOUNT_NAME_TAKEN;
         default:
@@ -102,8 +120,11 @@ WUHBUtilsStatus WUHBUtils_MountBundle(const char *name, const char *path, Bundle
 
 WUHBUtilsApiErrorType UnmountBundle(const char *, int32_t *);
 WUHBUtilsStatus WUHBUtils_UnmountBundle(const char *name, int32_t *outRes) {
-    if (sWUUUnmountBundle == nullptr) {
+    if (wuhbUtilsVersion == WUHB_UTILS_MODULE_VERSION_ERROR) {
         return WUHB_UTILS_RESULT_LIB_UNINITIALIZED;
+    }
+    if (sWUUUnmountBundle == nullptr || wuhbUtilsVersion < 1) {
+        return WUHB_UTILS_RESULT_UNSUPPORTED_COMMAND;
     }
     auto res = reinterpret_cast<decltype(&UnmountBundle)>(sWUUUnmountBundle)(name, outRes);
 
@@ -111,7 +132,7 @@ WUHBUtilsStatus WUHBUtils_UnmountBundle(const char *name, int32_t *outRes) {
         case WUHB_UTILS_API_ERROR_NONE:
             return WUHB_UTILS_RESULT_SUCCESS;
         case WUHB_UTILS_API_ERROR_INVALID_ARG:
-            return WUHB_UTILS_RESULT_INVALID_ARG;
+            return WUHB_UTILS_RESULT_INVALID_ARGUMENT;
         case WUHB_UTILS_API_ERROR_MOUNT_NOT_FOUND:
             return WUHB_UTILS_RESULT_MOUNT_NOT_FOUND;
         default:
@@ -121,15 +142,18 @@ WUHBUtilsStatus WUHBUtils_UnmountBundle(const char *name, int32_t *outRes) {
 
 WUHBUtilsApiErrorType FileOpen(const char *, WUHBFileHandle *);
 WUHBUtilsStatus WUHBUtils_FileOpen(const char *name, WUHBFileHandle *outHandle) {
-    if (sWUUFileOpen == nullptr) {
+    if (wuhbUtilsVersion == WUHB_UTILS_MODULE_VERSION_ERROR) {
         return WUHB_UTILS_RESULT_LIB_UNINITIALIZED;
+    }
+    if (sWUUFileOpen == nullptr || wuhbUtilsVersion < 1) {
+        return WUHB_UTILS_RESULT_UNSUPPORTED_COMMAND;
     }
     auto res = reinterpret_cast<decltype(&FileOpen)>(sWUUFileOpen)(name, outHandle);
     switch (res) {
         case WUHB_UTILS_API_ERROR_NONE:
             return WUHB_UTILS_RESULT_SUCCESS;
         case WUHB_UTILS_API_ERROR_INVALID_ARG:
-            return WUHB_UTILS_RESULT_INVALID_ARG;
+            return WUHB_UTILS_RESULT_INVALID_ARGUMENT;
         case WUHB_UTILS_API_ERROR_FILE_NOT_FOUND:
             return WUHB_UTILS_RESULT_FILE_NOT_FOUND;
         case WUHB_UTILS_API_ERROR_NO_MEMORY:
@@ -141,8 +165,11 @@ WUHBUtilsStatus WUHBUtils_FileOpen(const char *name, WUHBFileHandle *outHandle) 
 
 WUHBUtilsApiErrorType FileRead(WUHBFileHandle, uint8_t *, uint32_t, int32_t *);
 WUHBUtilsStatus WUHBUtils_FileRead(WUHBFileHandle handle, uint8_t *buffer, uint32_t size, int32_t *outRes) {
-    if (sWUUFileRead == nullptr) {
+    if (wuhbUtilsVersion == WUHB_UTILS_MODULE_VERSION_ERROR) {
         return WUHB_UTILS_RESULT_LIB_UNINITIALIZED;
+    }
+    if (sWUUFileRead == nullptr || wuhbUtilsVersion < 1) {
+        return WUHB_UTILS_RESULT_UNSUPPORTED_COMMAND;
     }
     auto res = reinterpret_cast<decltype(&FileRead)>(sWUUFileRead)(handle, buffer, size, outRes);
 
@@ -150,7 +177,7 @@ WUHBUtilsStatus WUHBUtils_FileRead(WUHBFileHandle handle, uint8_t *buffer, uint3
         case WUHB_UTILS_API_ERROR_NONE:
             return WUHB_UTILS_RESULT_SUCCESS;
         case WUHB_UTILS_API_ERROR_INVALID_ARG:
-            return WUHB_UTILS_RESULT_INVALID_ARG;
+            return WUHB_UTILS_RESULT_INVALID_ARGUMENT;
         case WUHB_UTILS_API_ERROR_FILE_HANDLE_NOT_FOUND:
             return WUHB_UTILS_RESULT_FILE_HANDLE_NOT_FOUND;
         default:
@@ -160,8 +187,11 @@ WUHBUtilsStatus WUHBUtils_FileRead(WUHBFileHandle handle, uint8_t *buffer, uint3
 
 WUHBUtilsApiErrorType FileClose(WUHBFileHandle);
 WUHBUtilsStatus WUHBUtils_FileClose(WUHBFileHandle handle) {
-    if (sWUUFileClose == nullptr) {
+    if (wuhbUtilsVersion == WUHB_UTILS_MODULE_VERSION_ERROR) {
         return WUHB_UTILS_RESULT_LIB_UNINITIALIZED;
+    }
+    if (sWUUFileClose == nullptr || wuhbUtilsVersion < 1) {
+        return WUHB_UTILS_RESULT_UNSUPPORTED_COMMAND;
     }
     auto res = reinterpret_cast<decltype(&FileClose)>(sWUUFileClose)(handle);
 
@@ -177,8 +207,11 @@ WUHBUtilsStatus WUHBUtils_FileClose(WUHBFileHandle handle) {
 
 WUHBUtilsApiErrorType FileExists(const char *, int32_t *);
 WUHBUtilsStatus WUHBUtils_FileExists(const char *name, int32_t *outRes) {
-    if (sWUUFileExists == nullptr) {
+    if (wuhbUtilsVersion == WUHB_UTILS_MODULE_VERSION_ERROR) {
         return WUHB_UTILS_RESULT_LIB_UNINITIALIZED;
+    }
+    if (sWUUFileExists == nullptr || wuhbUtilsVersion < 1) {
+        return WUHB_UTILS_RESULT_UNSUPPORTED_COMMAND;
     }
     auto res = reinterpret_cast<decltype(&FileExists)>(sWUUFileExists)(name, outRes);
 
@@ -186,17 +219,19 @@ WUHBUtilsStatus WUHBUtils_FileExists(const char *name, int32_t *outRes) {
         case WUHB_UTILS_API_ERROR_NONE:
             return WUHB_UTILS_RESULT_SUCCESS;
         case WUHB_UTILS_API_ERROR_INVALID_ARG:
-            return WUHB_UTILS_RESULT_INVALID_ARG;
+            return WUHB_UTILS_RESULT_INVALID_ARGUMENT;
         default:
             return WUHB_UTILS_RESULT_UNKNOWN_ERROR;
     }
 }
 
-
 WUHBUtilsApiErrorType GetRPXInfo(const char *, BundleSource, WUHBRPXInfo *);
 WUHBUtilsStatus WUHBUtils_GetRPXInfo(const char *path, BundleSource source, WUHBRPXInfo *outFileInfo) {
-    if (sWUUGetRPXInfo == nullptr) {
+    if (wuhbUtilsVersion == WUHB_UTILS_MODULE_VERSION_ERROR) {
         return WUHB_UTILS_RESULT_LIB_UNINITIALIZED;
+    }
+    if (sWUUGetRPXInfo == nullptr || wuhbUtilsVersion < 1) {
+        return WUHB_UTILS_RESULT_UNSUPPORTED_COMMAND;
     }
     auto res = reinterpret_cast<decltype(&GetRPXInfo)>(sWUUGetRPXInfo)(path, source, outFileInfo);
 
@@ -204,7 +239,7 @@ WUHBUtilsStatus WUHBUtils_GetRPXInfo(const char *path, BundleSource source, WUHB
         case WUHB_UTILS_API_ERROR_NONE:
             return WUHB_UTILS_RESULT_SUCCESS;
         case WUHB_UTILS_API_ERROR_INVALID_ARG:
-            return WUHB_UTILS_RESULT_INVALID_ARG;
+            return WUHB_UTILS_RESULT_INVALID_ARGUMENT;
         case WUHB_UTILS_API_ERROR_MOUNT_FAILED:
             return WUHB_UTILS_RESULT_MOUNT_FAILED;
         case WUHB_UTILS_API_ERROR_FILE_NOT_FOUND:
@@ -214,10 +249,9 @@ WUHBUtilsStatus WUHBUtils_GetRPXInfo(const char *path, BundleSource source, WUHB
     }
 }
 
-
 WUHBUtilsStatus WUHBUtils_ReadWholeFile(const char *name, uint8_t **outBuf, uint32_t *outSize) {
     if (!outBuf || !outSize) {
-        return WUHB_UTILS_RESULT_INVALID_ARG;
+        return WUHB_UTILS_RESULT_INVALID_ARGUMENT;
     }
     auto DEFAULT_READ_BUFFER_SIZE = 128 * 1024;
     WUHBFileHandle handle;

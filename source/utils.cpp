@@ -58,7 +58,7 @@ WUHBUtilsStatus WUHBUtils_InitLibrary() {
         return WUHB_UTILS_RESULT_MODULE_NOT_FOUND;
     }
 
-    if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_GetVersion", (void **) &sWUUGetVersion) != OS_DYNLOAD_OK) {
+    if (OSDynLoad_FindExport(sModuleHandle, OS_DYNLOAD_EXPORT_FUNC, "WUU_GetVersion", (void **) &sWUUGetVersion) != OS_DYNLOAD_OK) {
         DEBUG_FUNCTION_LINE_ERR("FindExport WUU_GetVersion failed.");
         return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
     }
@@ -68,37 +68,37 @@ WUHBUtilsStatus WUHBUtils_InitLibrary() {
         return WUHB_UTILS_RESULT_UNSUPPORTED_VERSION;
     }
 
-    if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_MountBundle", (void **) &sWUUMountBundle) != OS_DYNLOAD_OK) {
+    if (OSDynLoad_FindExport(sModuleHandle, OS_DYNLOAD_EXPORT_FUNC, "WUU_MountBundle", (void **) &sWUUMountBundle) != OS_DYNLOAD_OK) {
         DEBUG_FUNCTION_LINE_WARN("FindExport WUU_MountBundle failed.");
         sWUUMountBundle = nullptr;
     }
 
-    if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_UnmountBundle", (void **) &sWUUUnmountBundle) != OS_DYNLOAD_OK) {
+    if (OSDynLoad_FindExport(sModuleHandle, OS_DYNLOAD_EXPORT_FUNC, "WUU_UnmountBundle", (void **) &sWUUUnmountBundle) != OS_DYNLOAD_OK) {
         DEBUG_FUNCTION_LINE_WARN("FindExport WUU_UnmountBundle failed.");
         sWUUUnmountBundle = nullptr;
     }
 
-    if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_FileOpen", (void **) &sWUUFileOpen) != OS_DYNLOAD_OK) {
+    if (OSDynLoad_FindExport(sModuleHandle, OS_DYNLOAD_EXPORT_FUNC, "WUU_FileOpen", (void **) &sWUUFileOpen) != OS_DYNLOAD_OK) {
         DEBUG_FUNCTION_LINE_WARN("FindExport WUU_FileOpen failed.");
         sWUUFileOpen = nullptr;
     }
 
-    if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_FileRead", (void **) &sWUUFileRead) != OS_DYNLOAD_OK) {
+    if (OSDynLoad_FindExport(sModuleHandle, OS_DYNLOAD_EXPORT_FUNC, "WUU_FileRead", (void **) &sWUUFileRead) != OS_DYNLOAD_OK) {
         DEBUG_FUNCTION_LINE_WARN("FindExport WUU_FileRead failed.");
         sWUUFileRead = nullptr;
     }
 
-    if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_FileClose", (void **) &sWUUFileClose) != OS_DYNLOAD_OK) {
+    if (OSDynLoad_FindExport(sModuleHandle, OS_DYNLOAD_EXPORT_FUNC, "WUU_FileClose", (void **) &sWUUFileClose) != OS_DYNLOAD_OK) {
         DEBUG_FUNCTION_LINE_WARN("FindExport WUU_FileClose failed.");
         sWUUFileClose = nullptr;
     }
 
-    if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_FileExists", (void **) &sWUUFileExists) != OS_DYNLOAD_OK) {
+    if (OSDynLoad_FindExport(sModuleHandle, OS_DYNLOAD_EXPORT_FUNC, "WUU_FileExists", (void **) &sWUUFileExists) != OS_DYNLOAD_OK) {
         DEBUG_FUNCTION_LINE_WARN("FindExport WUU_FileExists failed.");
         sWUUFileExists = nullptr;
     }
 
-    if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_GetRPXInfo", (void **) &sWUUGetRPXInfo) != OS_DYNLOAD_OK) {
+    if (OSDynLoad_FindExport(sModuleHandle, OS_DYNLOAD_EXPORT_FUNC, "WUU_GetRPXInfo", (void **) &sWUUGetRPXInfo) != OS_DYNLOAD_OK) {
         DEBUG_FUNCTION_LINE_WARN("FindExport WUU_GetRPXInfo failed.");
         sWUUGetRPXInfo = nullptr;
     }
@@ -118,7 +118,7 @@ WUHBUtilsStatus WUHBUtils_GetVersion(WUHBUtilsVersion *outVersion) {
             return WUHB_UTILS_RESULT_MODULE_NOT_FOUND;
         }
 
-        if (OSDynLoad_FindExport(sModuleHandle, FALSE, "WUU_GetVersion", (void **) &sWUUGetVersion) != OS_DYNLOAD_OK) {
+        if (OSDynLoad_FindExport(sModuleHandle, OS_DYNLOAD_EXPORT_FUNC, "WUU_GetVersion", (void **) &sWUUGetVersion) != OS_DYNLOAD_OK) {
             DEBUG_FUNCTION_LINE_WARN("FindExport WUU_GetVersion failed.");
             return WUHB_UTILS_RESULT_MODULE_MISSING_EXPORT;
         }
